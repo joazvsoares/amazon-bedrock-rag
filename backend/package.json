@@ -8,7 +8,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "query": "AWS_PROFILE=wppapi ts-node src/App.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -20,6 +21,10 @@
     "typescript": "~5.3.3"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.624.0",
+    "@aws-sdk/client-bedrock-agent": "^3.624.0",
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.625.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.624.0",
     "@cdklabs/generative-ai-cdk-constructs": "^0.1.106",
     "@middy/core": "^5.2.4",
     "@middy/http-header-normalizer": "^5.2.4",
@@ -28,6 +33,7 @@
     "@types/uuid": "^9.0.8",
     "aws-cdk-lib": "2.127.0",
     "constructs": "^10.0.0",
+    "imvectordb": "^0.0.6",
     "source-map-support": "^0.5.21",
     "uuid": "^9.0.1"
   }

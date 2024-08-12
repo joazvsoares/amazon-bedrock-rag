@@ -76,8 +76,6 @@ export class BackendStack extends Stack {
       })
     );
 
-    const whitelistedIps = [Stack.of(this).node.tryGetContext('allowedip')];
-
     const apiGateway = new apigw.RestApi(this, 'rag', {
       description: 'API for RAG',
       restApiName: 'rag-api',
@@ -126,44 +124,20 @@ export class BackendStack extends Stack {
     /**
      * Create and Associate ACL with Gateway
      */
-    // Create an IPSet
-    const allowedIpSet = new wafv2.CfnIPSet(this, 'DevIpSet', {
-      addresses: whitelistedIps, // whitelisted IPs in CIDR format
-      ipAddressVersion: 'IPV4',
-      scope: 'REGIONAL',
-      description: 'List of allowed IP addresses',
-    });    
     // Create our Web ACL
-    const webACL = new wafv2.CfnWebACL(this, 'WebACL', {
+    const webACL = new wafv2.CfnWebACL(this, "WebACL", {
       defaultAction: {
-        block: {}
+        allow: {}, // Change the default action to allow
       },
-      scope: 'REGIONAL',
+      scope: "REGIONAL",
       visibilityConfig: {
         cloudWatchMetricsEnabled: true,
-        metricName: 'webACL',
-        sampledRequestsEnabled: true
+        metricName: "webACL",
+        sampledRequestsEnabled: true,
       },
-      rules: [
-        {
-          name: 'IPAllowList',
-          priority: 1,
-          statement: {
-            ipSetReferenceStatement: {
-              arn: allowedIpSet.attrArn,
-            }
-          },
-          action: {
-              allow: {},
-          },          
-          visibilityConfig: {
-            sampledRequestsEnabled: true,
-            cloudWatchMetricsEnabled: true,
-            metricName: 'IPAllowList'
-          }
-        }
-      ]
+      rules: [], // Remove all specific rules, effectively allowing all traffic
     });
+
 
     // Associate with our gateway
     const webACLAssociation = new wafv2.CfnWebACLAssociation(this, 'WebACLAssociation', {

@@ -6,9 +6,9 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import * as uuid from "uuid";
 import { bedrock } from "@cdklabs/generative-ai-cdk-constructs";
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import * as iam  from 'aws-cdk-lib/aws-iam';
-import * as apigw  from 'aws-cdk-lib/aws-apigateway';
-import * as wafv2  from 'aws-cdk-lib/aws-wafv2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as apigw from 'aws-cdk-lib/aws-apigateway';
+import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import { join } from 'path';
 
 export class BackendStack extends Stack {
@@ -80,7 +80,7 @@ export class BackendStack extends Stack {
       description: 'API for RAG',
       restApiName: 'rag-api',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigw.Cors.ALL_ORIGINS,                
+        allowOrigins: apigw.Cors.ALL_ORIGINS,
       },
     });
 
@@ -106,8 +106,33 @@ export class BackendStack extends Stack {
       })
     );
 
+    const lambdaEmbeddings = new NodejsFunction(this, 'Embeddings', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: join(__dirname, '../lambda/query/index.js'),
+      functionName: `generate-embeddings`,
+      timeout: Duration.seconds(300),
+    });
+
+    lambdaEmbeddings.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "bedrock:RetrieveAndGenerate",
+          "bedrock:Retrieve",
+          "bedrock:InvokeModel",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "es:ESHttpGet",
+          "es:ESHttpPut",
+          "es:ESHttpPost",
+        ],
+        resources: [
+          "*",
+        ],
+      })
+    );
+
     apiGateway.root.addResource('docs').addMethod('POST', new apigw.LambdaIntegration(lambdaQuery));
-    
+
     apiGateway.addUsagePlan('usage-plan', {
       name: 'dev-docs-plan',
       description: 'usage plan for dev',
@@ -119,7 +144,7 @@ export class BackendStack extends Stack {
         rateLimit: 100,
         burstLimit: 200
       },
-    }); 
+    });
 
     /**
      * Create and Associate ACL with Gateway
@@ -146,11 +171,11 @@ export class BackendStack extends Stack {
     });
 
     // make sure api gateway is deployed before web ACL association
-    webACLAssociation.node.addDependency(apiGateway);    
-    
+    webACLAssociation.node.addDependency(apiGateway);
+
     //CfnOutput is used to log API Gateway URL and S3 bucket name to console
     new CfnOutput(this, "APIGatewayUrl", {
-      value: apiGateway.url, 
+      value: apiGateway.url,
     });
 
     new CfnOutput(this, "DocsBucketName", {

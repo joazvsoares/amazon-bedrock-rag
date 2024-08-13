@@ -40,7 +40,7 @@ class BedrockEmbeddingGenerator {
         const embeddings = JSON.parse(
           new TextDecoder("utf-8").decode(response.body)
         );
-        return embeddings;
+        return embeddings.embedding;
       } else {
         throw new Error("Failed to generate embeddings: Empty response body");
       }

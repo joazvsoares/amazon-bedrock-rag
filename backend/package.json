@@ -9,6 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
+    "deploy": "AWS_PROFILE=wppapi cdk deploy",
     "query": "AWS_PROFILE=wppapi ts-node src/App.ts"
   },
   "devDependencies": {

@@ -106,11 +106,14 @@ export class BackendStack extends Stack {
       })
     );
 
-    const lambdaEmbeddings = new NodejsFunction(this, 'Embeddings', {
+    const lambdaEmbeddings = new NodejsFunction(this, "Embeddings", {
       runtime: Runtime.NODEJS_20_X,
-      entry: join(__dirname, '../lambda/query/index.js'),
+      entry: join(__dirname, "../src/lambda/embeddings.ts"),
       functionName: `generate-embeddings`,
       timeout: Duration.seconds(300),
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
     });
 
     lambdaEmbeddings.addToRolePolicy(
@@ -121,13 +124,9 @@ export class BackendStack extends Stack {
           "bedrock:InvokeModel",
           "s3:GetObject",
           "s3:ListBucket",
-          "es:ESHttpGet",
-          "es:ESHttpPut",
-          "es:ESHttpPost",
+          "aoss:*",
         ],
-        resources: [
-          "*",
-        ],
+        resources: ["*"],
       })
     );
 

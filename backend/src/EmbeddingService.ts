@@ -4,6 +4,8 @@ import BedrockEmbeddingGenerator from "./BedrockEmbeddingGenerator";
 import { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
+import { defaultProvider } from '@aws-sdk/credential-provider-node';
+import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws';
 
 class EmbeddingService {
   private embeddingGenerator: BedrockEmbeddingGenerator;
@@ -14,6 +16,14 @@ class EmbeddingService {
   constructor(region: string, openSearchEndpoint: string, indexName: string) {
     this.embeddingGenerator = new BedrockEmbeddingGenerator(region);
     this.openSearchClient = new OpenSearchClient({
+      ...AwsSigv4Signer({
+        region: 'us-east-1',
+        service: 'aoss',
+        getCredentials: () => {
+          const credentialsProvider = defaultProvider();
+          return credentialsProvider();
+        },
+      }),
       node: openSearchEndpoint,
     });
     this.s3Client = new S3Client({ region });
@@ -98,13 +108,12 @@ class EmbeddingService {
       // Store the embedding in OpenSearch
       await this.openSearchClient.index({
         index: this.indexName,
-        id: id,
         body: {
           "bedrock-knowledge-base-default-vector": embedding,
           AMAZON_BEDROCK_TEXT_CHUNK: text,
-          AMAZON_BEDROCK_METADATA: "", // Add any relevant metadata here
-          "x-amz-bedrock-kb-data-source-id": "source-id", // Replace with your source ID
-          "x-amz-bedrock-kb-source-uri": "source-uri",   // Replace with your source URI
+          AMAZON_BEDROCK_METADATA: "",
+          "x-amz-bedrock-kb-data-source-id": "source-id",
+          "x-amz-bedrock-kb-source-uri": "source-uri",
         },
       });
 
